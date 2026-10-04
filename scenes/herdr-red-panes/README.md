@@ -19,8 +19,8 @@ excerpts with Line Marks:
 The pane badge follows Herdr's semantics: red Blocked, yellow Working, teal Done.
 Plugin → pane report arrows are colored by correctness, not by the reported
 state: green for a correct report (including correct reports in the broken
-replay), red for a faulty one such as the premature idle pings. Execution,
-permission, and internal-state rows stay neutral.
+replay), red for a faulty one such as the premature idle pings. Execution and
+permission events use the request tone; internal-state notes stay muted.
 Live permission requests and forms still block. The scene does not claim to fix
 the separate shuvcode child-view autoaccept bug or establish live bug frequency.
 
