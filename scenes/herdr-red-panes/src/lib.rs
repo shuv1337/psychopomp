@@ -301,28 +301,33 @@ fn behavior(pr: &Pr, flow: Flow) -> Result<ScenePlan> {
     Ok(scene.finish()?)
 }
 
+fn report(id: &str, label: &str, correct: bool) -> Row {
+    let tone = if correct { Tone::Success } else { Tone::Error };
+    Row::message(id, "plugin", "pane", label, tone)
+}
+
 fn ghost_flow() -> Flow {
     Flow {
         slots: 6,
         rows: vec![
             Row::message("ask", "tui", "plugin", "permission.asked", Tone::Request).in_slot(0),
-            Row::message("block", "plugin", "pane", "blocked", Tone::Error).in_slot(1),
+            report("block", "blocked", true).in_slot(1),
             Row::message(
                 "terminal",
                 "tui",
                 "plugin",
                 "execution.interrupted",
-                Tone::Muted,
+                Tone::Request,
             )
             .in_slot(2),
-            Row::note("stale", &["plugin"], "cached ask survives", Tone::Error).in_slot(3),
-            Row::message("stuck", "plugin", "pane", "blocked, again", Tone::Error).in_slot(4),
+            Row::note("stale", &["plugin"], "cached ask survives", Tone::Muted).in_slot(3),
+            report("stuck", "blocked, again", false).in_slot(4),
             Row::note("ended", &["tui"], "execution ended", Tone::Muted).in_slot(5),
             Row::note(
                 "expire",
                 &["plugin"],
                 "expire this member's asks",
-                Tone::Success,
+                Tone::Muted,
             )
             .in_slot(3),
             Row::reply(
@@ -330,10 +335,10 @@ fn ghost_flow() -> Flow {
                 "plugin",
                 "tui",
                 "invalidate + sync permissions",
-                Tone::Success,
+                Tone::Request,
             )
             .in_slot(4),
-            Row::message("idle", "plugin", "pane", "idle", Tone::Success).in_slot(5),
+            report("idle", "idle", true).in_slot(5),
         ],
         before: vec![
             ("ask", 1.2),
@@ -407,32 +412,25 @@ fn failed_flow() -> Flow {
         slots: 7,
         rows: vec![
             Row::message("start", "tui", "plugin", "execution.started", Tone::Request).in_slot(0),
-            Row::message("work", "plugin", "pane", "working", Tone::Warning).in_slot(1),
+            report("work", "working", true).in_slot(1),
             Row::message(
                 "error",
                 "tui",
                 "plugin",
                 "execution.failed · 429",
-                Tone::Error,
+                Tone::Request,
             )
             .in_slot(2),
-            Row::note("old-map", &["plugin"], "failed → blocked", Tone::Error).in_slot(3),
-            Row::message("blocked", "plugin", "pane", "blocked", Tone::Error).in_slot(4),
+            Row::note("old-map", &["plugin"], "failed → blocked", Tone::Muted).in_slot(3),
+            report("blocked", "blocked", false).in_slot(4),
             Row::note(
                 "new-map",
                 &["plugin"],
                 "failed → idle + metadata",
-                Tone::Success,
+                Tone::Muted,
             )
             .in_slot(3),
-            Row::message(
-                "failed-idle",
-                "plugin",
-                "pane",
-                "idle · label: failed",
-                Tone::Success,
-            )
-            .in_slot(4),
+            report("failed-idle", "idle · label: failed", true).in_slot(4),
             Row::message(
                 "next",
                 "tui",
@@ -441,14 +439,7 @@ fn failed_flow() -> Flow {
                 Tone::Request,
             )
             .in_slot(5),
-            Row::message(
-                "clear",
-                "plugin",
-                "pane",
-                "working · clear failed label",
-                Tone::Warning,
-            )
-            .in_slot(6),
+            report("clear", "working · clear failed label", true).in_slot(6),
         ],
         before: vec![
             ("start", 1.1),
@@ -529,17 +520,17 @@ fn family_flow() -> Flow {
                 "tui",
                 "plugin",
                 "root execution.succeeded",
-                Tone::Muted,
+                Tone::Request,
             )
             .in_slot(2),
             Row::note(
                 "ignored",
                 &["plugin"],
                 "child execution ignored",
-                Tone::Error,
+                Tone::Muted,
             )
             .in_slot(3),
-            Row::message("early", "plugin", "pane", "idle", Tone::Success).in_slot(4),
+            report("early", "idle", false).in_slot(4),
             Row::message(
                 "wake",
                 "tui",
@@ -548,31 +539,31 @@ fn family_flow() -> Flow {
                 Tone::Request,
             )
             .in_slot(5),
-            Row::message("again", "plugin", "pane", "idle, again", Tone::Success).in_slot(6),
+            report("again", "idle, again", false).in_slot(6),
             Row::note(
                 "family",
                 &["plugin"],
                 "running descendant → working",
-                Tone::Warning,
+                Tone::Muted,
             )
             .in_slot(3),
-            Row::message("working", "plugin", "pane", "working", Tone::Warning).in_slot(4),
-            Row::message("last", "tui", "plugin", "last child completes", Tone::Muted).in_slot(5),
+            report("working", "working", true).in_slot(4),
+            Row::message(
+                "last",
+                "tui",
+                "plugin",
+                "last child completes",
+                Tone::Request,
+            )
+            .in_slot(5),
             Row::note(
                 "delay",
                 &["plugin", "pane"],
                 "idle deadline: +1.5 s",
-                Tone::Warning,
+                Tone::Muted,
             )
             .in_slot(6),
-            Row::message(
-                "idle",
-                "plugin",
-                "pane",
-                "idle · once settled",
-                Tone::Success,
-            )
-            .in_slot(6),
+            report("idle", "idle · once settled", true).in_slot(6),
         ],
         before: vec![
             ("root", 1.0),
@@ -1037,6 +1028,39 @@ mod tests {
         assert_eq!(status_at(&family, 22.0).accent, TEAL);
         let track = timeline(&family);
         assert_eq!(sample(&track, "flow.row.idle.reveal", 19.69, 0.0), 0.0);
+    }
+
+    #[test]
+    fn arrow_tone_marks_report_correctness_not_pane_state() {
+        let faulty = ["stuck", "blocked", "early", "again"];
+        for (pr, flow) in [
+            (&GHOST, ghost_flow()),
+            (&FAILED, failed_flow()),
+            (&FAMILY, family_flow()),
+        ] {
+            let plan = behavior(pr, flow).unwrap();
+            let actor = plan
+                .actors
+                .iter()
+                .find(|actor| actor.recipe == "sequence")
+                .unwrap();
+            let sequence: SequencePlan = serde_json::from_value(actor.data.clone()).unwrap();
+            for row in &sequence.rows {
+                let reports = matches!(row, Row::Message { to, .. } if to == "pane");
+                let expected = match (reports, faulty.contains(&row.id())) {
+                    (true, true) => vec![Tone::Error],
+                    (true, false) => vec![Tone::Success],
+                    (false, _) => vec![Tone::Request, Tone::Muted],
+                };
+                assert!(
+                    expected.contains(&row.tone()),
+                    "{} row {}: {:?}",
+                    plan.id,
+                    row.id(),
+                    row.tone()
+                );
+            }
+        }
     }
 
     #[test]
