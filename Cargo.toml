@@ -16,6 +16,7 @@ members = [
   "scenes/tree",
   "scenes/callouts",
   "scenes/config-migration",
+  "scenes/herdr-red-panes",
   "scenes/opencode-jr-architecture",
   "scenes/pr-50231",
   "scenes/charts",

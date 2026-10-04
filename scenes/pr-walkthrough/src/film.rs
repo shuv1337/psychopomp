@@ -2,7 +2,8 @@
 //! naming the pull request, status chips, a behavior segment that plays the
 //! broken story as a Sequence Diagram and replays the fix in the same slots, and
 //! a code segment that animates the change as a Stepped Diff. Every moment is a
-//! phrase in the narration, so re-voicing the script re-times the film.
+//! phrase in the narration, so re-voicing the script re-times the film. Caption-only
+//! Scene Programs can reuse the chrome and `code_on_clock` without loading audio.
 use anyhow::{Context, Result};
 use psychopomp::{
     author::{PlanBuilder, seconds},
@@ -196,17 +197,31 @@ pub fn code(
     let duration = lead + clip.duration() + seconds(1.6);
     let mut scene = PlanBuilder::new(format!("{}-code", pr.slug), duration);
     let spoken = clip.place(&mut scene, lead);
-    header(&mut scene, pr, None)?;
-    let mut change = chip(&mut scene, "chip-change", Tone::Accent, "the change")?;
-    change.show(&mut scene, seconds(0.2));
     let times = steps
         .iter()
         .map(|phrase| spoken.at(phrase))
         .collect::<Vec<_>>();
-    diff.declare(&mut scene, &times, seconds(0.9), entrance)?;
-    let mut caption = footer(&mut scene, "footer", vec![span(note, Tone::Muted)])?;
-    caption.show(&mut scene, seconds(0.6));
+    code_on_clock(&mut scene, pr, &diff, &times, note, entrance)?;
     scene.finish().with_context(|| format!("{}-code", pr.slug))
+}
+
+/// Declare the same code film on an explicit plan clock, without narration or
+/// media. The caller owns the duration and may add caption beats before finishing.
+pub fn code_on_clock(
+    scene: &mut PlanBuilder,
+    pr: &Pr,
+    diff: &Diff,
+    step_times: &[u64],
+    note: &str,
+    entrance: bool,
+) -> Result<()> {
+    header(scene, pr, None)?;
+    let mut change = chip(scene, "chip-change", Tone::Accent, "the change")?;
+    change.show(scene, seconds(0.2));
+    diff.declare(scene, step_times, seconds(0.9), entrance)?;
+    let mut caption = footer(scene, "footer", vec![span(note, Tone::Muted)])?;
+    caption.show(scene, seconds(0.6));
+    Ok(())
 }
 
 /// A phrase in the after clip that is only searched once `earlier` has been said.

@@ -1639,6 +1639,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "psychopomp-herdr-red-panes"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "psychopomp",
+ "psychopomp-pr-walkthrough",
+ "serde_json",
+]
+
+[[package]]
 name = "psychopomp-hero"
 version = "0.1.0"
 dependencies = [

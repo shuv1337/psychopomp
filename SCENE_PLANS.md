@@ -416,6 +416,11 @@ reusable for any code explainer:
 - `ReelPlan::dipped(id, plans, transition_nanos)` joins segments with dips.
 - `psychopomp_pr_walkthrough::film` is the PR-film template itself (`header`,
   `chip`, `footer`, `behavior`, `code`); `scenes/config-migration` reuses it.
+  For a silent film, `scenes/herdr-red-panes` reuses the chrome and
+  `film::code_on_clock(scene, pr, diff, step_times, note, entrance)`: explicit
+  nanosecond step times replace phrase lookups, and ordinary Caption actors
+  carry readable beats. Its Reel has no media placements; no narration manifest
+  or placeholder audio is needed. Generate with `cargo run -p psychopomp-herdr-red-panes`.
 
 ```sh
 # 1. Voice the script (Fish Audio via 1Password; --draft uses macOS `say`).

@@ -121,6 +121,7 @@ Scene Programs (`scenes/`), each emitting a Scene Plan, Deck, or Reel:
 - `scenes/opencode-jr-architecture/`: narrated Stage-film teaching reel of the OpenCode Jr Slack bot, with one condensed code zoom
 - `scenes/pr-walkthrough/`: narrated PR explainer reels; `src/film.rs` is the shared PR-film template (header, chips, behavior and code segments)
 - `scenes/config-migration/`: narrated reels of two OpenCode config pull requests built on the PR-film template
+- `scenes/herdr-red-panes/`: silent caption-only reel of three Herdr plugin status fixes; explicit-clock sequence rewinds and Stepped Diffs reuse the PR-film chrome and `code_on_clock`
 - `scenes/pr-50231/`: narrated Stage film of the Effect rc.112 → rc.117 upgrade and the three behaviors the compiler could not catch
 - `scenes/rolling-number/`: Rolling Number showroom: roll up and down, a mid-roll redirect, a carry into a new place, and a shrink
 - `scenes/tree/`: Tree showroom: the plan `agent-demo` emits, opened node by node, scrolled, highlighted, a value rolled, then folded

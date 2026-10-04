@@ -55,6 +55,14 @@ cargo run -p psychopomp-pr-walkthrough
 cargo run --release -- plan render scenes/pr-walkthrough/pr-walkthrough.reel.json output/pr-walkthrough.mp4 --theme opencode
 ```
 
+For a **caption-only, silent** example, [Herdr red panes](scenes/herdr-red-panes/README.md)
+replays three incorrect status reports, then animates the real plugin changes:
+
+```sh
+cargo run -p psychopomp-herdr-red-panes
+cargo run --release -- plan render target/herdr-red-panes/reel.json output/herdr-red-panes.mp4 --theme opencode
+```
+
 ## Change intent, motion, or pixels in the right place
 
 A **Scene Program** is a small Rust executable under `scenes/`. It writes a
