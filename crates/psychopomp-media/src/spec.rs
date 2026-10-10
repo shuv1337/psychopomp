@@ -104,6 +104,8 @@ pub struct Voice {
     model: Option<String>,
     settings: Settings,
     whisper: bool,
+    /// ElevenLabs output format override (default `mp3_44100_192`, which needs Creator tier+).
+    format: Option<String>,
 }
 
 impl Voice {
@@ -131,6 +133,7 @@ impl Voice {
             model: model.map(str::to_owned),
             settings: Settings::default(),
             whisper: false,
+            format: None,
         }
     }
 
@@ -183,6 +186,13 @@ impl Voice {
         self
     }
 
+    /// ElevenLabs output format, such as `mp3_44100_128` for accounts below
+    /// Creator tier. Part of the content key, so changing it regenerates.
+    pub fn format(mut self, format: impl Into<String>) -> Self {
+        self.format = Some(format.into());
+        self
+    }
+
     /// Time words with Whisper instead of the provider's alignment.
     pub fn whisper(mut self) -> Self {
         self.whisper = true;
@@ -230,8 +240,14 @@ impl Voice {
             bail!("only ElevenLabs stitches a line after another");
         }
         let (format, align) = match self.backend {
-            Backend::ElevenLabs if !self.whisper => (ELEVEN_FORMAT, PROVIDER_ALIGN.to_owned()),
-            Backend::ElevenLabs => (ELEVEN_FORMAT, whisper_align()),
+            Backend::ElevenLabs if !self.whisper => (
+                self.format.as_deref().unwrap_or(ELEVEN_FORMAT),
+                PROVIDER_ALIGN.to_owned(),
+            ),
+            Backend::ElevenLabs => (
+                self.format.as_deref().unwrap_or(ELEVEN_FORMAT),
+                whisper_align(),
+            ),
             Backend::Fish => (FISH_FORMAT, whisper_align()),
             Backend::Say => (SAY_FORMAT, whisper_align()),
         };
@@ -255,6 +271,7 @@ impl Voice {
             && self.model == other.model
             && self.settings == other.settings
             && self.whisper == other.whisper
+            && self.format == other.format
     }
 
     pub(crate) fn id(&self) -> &str {
